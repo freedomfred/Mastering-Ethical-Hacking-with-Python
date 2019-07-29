@@ -16,7 +16,7 @@ class TCPDNSHandler(socketserver.BaseRequestHandler):
         filled = int(round(bar * (tot-c) / float(tot)))
 
         pct = round(100.0 * (tot-c) / float(tot), 1)
-        barstr = '-' * (bar - filled) + '=' * filled
+        barstr =  '=' * filled + '-' * (bar - filled)
 
         sys.stdout.write('[%s] %s%s ...%s\r' % (barstr, pct, '%', status))
         sys.stdout.flush()
