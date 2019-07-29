@@ -53,7 +53,7 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
                 else:
                     # new connection. we expect a file name
                     parts = content.split("|")
-                    if (len(parts==3)):
+                    if (len(parts)==3):
                         #we have valid request
                         print("new file upload: ",content)
                         self.fIP[sIP]= [os.path.basename(parts[0]),int(parts[1]),parts[2],"",int(parts[1])]
