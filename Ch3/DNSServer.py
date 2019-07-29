@@ -10,6 +10,16 @@ from hashlib import md5
 class TCPDNSHandler(socketserver.BaseRequestHandler):
     filesInProgress = {}
 
+    def progressBar(c, tot, status):
+        bar = 40
+        filled = int(round(bar * c / float(tot)))
+
+        pct = round(100.0 * c / float(tot), 1)
+        barstr = '=' * filled + '-' * (bar - filled)
+
+        sys.stdout.write('[%s] %s%s ...%s\r' % (barstr, pct, '%', status))
+        sys.stdout.flush()
+        
     def processRequest(self, questions):
         for question in questions:
             if (question.qtype == dnslib.QTYPE.TXT):
@@ -19,7 +29,8 @@ class TCPDNSHandler(socketserver.BaseRequestHandler):
                 if self.client_address[0] in self.filesInProgress:
                     self.filesInProgress[self.client_address[0]][3] += content
                     self.filesInProgress[self.client_address[0]][1] -= len(content)
-                    print("Left: "+str(self.filesInProgress[self.client_address[0]][1]))
+                    #print("Left: "+str(self.filesInProgress[self.client_address[0]][1]))
+                    progressBar(self.filesInProgress[self.client_address[0]][1],self.filesInProgress[self.client_address[0]][4],"Receiving '"+self.filesInProgress[self.client_address[0]][0]+"' from "+self.client_address[0])
                     if (self.filesInProgress[self.client_address[0]][1] == 0):
                         #we have received the entire file. Time to write it.
                         content_decoded = base64.standard_b64decode(self.filesInProgress[self.client_address[0]][3])
@@ -34,17 +45,13 @@ class TCPDNSHandler(socketserver.BaseRequestHandler):
 
                         del self.filesInProgress[self.client_address[0]]
                         
-                        
-
-
-                        
-
+                
                     
                 else:
                     # new connection. we expect a file name
                     print("new file upload: ",content)
                     parts = content.split("|")
-                    self.filesInProgress[self.client_address[0]]= [parts[0],int(parts[1]),parts[2],""]
+                    self.filesInProgress[self.client_address[0]]= [parts[0],int(parts[1]),parts[2],"",int(parts[1])]
 
 
     def handle(self):
