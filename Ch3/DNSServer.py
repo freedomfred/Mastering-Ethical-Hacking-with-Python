@@ -10,7 +10,7 @@ from hashlib import md5
 class TCPDNSHandler(socketserver.BaseRequestHandler):
     filesInProgress = {}
 
-    def progressBar(c, tot, status):
+    def progressBar(self,c, tot, status):
         bar = 40
         filled = int(round(bar * c / float(tot)))
 
