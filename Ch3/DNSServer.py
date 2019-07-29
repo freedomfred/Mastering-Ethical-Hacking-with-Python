@@ -5,6 +5,7 @@ import socketserver
 import dnslib
 import base64
 from hashlib import md5
+import argparse,sys,time
 
 
 class TCPDNSHandler(socketserver.BaseRequestHandler):
