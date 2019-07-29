@@ -30,7 +30,7 @@ class TCPDNSHandler(socketserver.BaseRequestHandler):
                     self.filesInProgress[self.client_address[0]][3] += content
                     self.filesInProgress[self.client_address[0]][1] -= len(content)
                     #print("Left: "+str(self.filesInProgress[self.client_address[0]][1]))
-                    progressBar(self.filesInProgress[self.client_address[0]][1],self.filesInProgress[self.client_address[0]][4],"Receiving '"+self.filesInProgress[self.client_address[0]][0]+"' from "+self.client_address[0])
+                    self.progressBar(self.filesInProgress[self.client_address[0]][1],self.filesInProgress[self.client_address[0]][4],"Receiving '"+self.filesInProgress[self.client_address[0]][0]+"' from "+self.client_address[0])
                     if (self.filesInProgress[self.client_address[0]][1] == 0):
                         #we have received the entire file. Time to write it.
                         content_decoded = base64.standard_b64decode(self.filesInProgress[self.client_address[0]][3])
