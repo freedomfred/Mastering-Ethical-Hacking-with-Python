@@ -5,11 +5,11 @@ import socketserver
 import dnslib
 import base64
 from hashlib import md5
-import argparse,sys,time
+import argparse,sys,time, os
 
 
 class TCPDNSHandler(socketserver.BaseRequestHandler):
-    filesInProgress = {}
+    fIP = {}
 
     def progressBar(self,c, tot, status):
         bar = 40
@@ -27,24 +27,26 @@ class TCPDNSHandler(socketserver.BaseRequestHandler):
                 #only process TXT record requests
                 content = str(question.qname)[:-1]
 
-                if self.client_address[0] in self.filesInProgress:
-                    self.filesInProgress[self.client_address[0]][3] += content
-                    self.filesInProgress[self.client_address[0]][1] -= len(content)
-                    #print("Left: "+str(self.filesInProgress[self.client_address[0]][1]))
-                    self.progressBar(self.filesInProgress[self.client_address[0]][1],self.filesInProgress[self.client_address[0]][4],"Receiving '"+self.filesInProgress[self.client_address[0]][0]+"' from "+self.client_address[0])
-                    if (self.filesInProgress[self.client_address[0]][1] == 0):
+                sIP = self.client_address[0]
+
+                if sIP in self.fIP:
+                    self.fIP[sIP][3] += content
+                    self.fIP[sIP][1] -= len(content)
+                    #print("Left: "+str(self.fIP[sIP][1]))
+                    self.progressBar(self.fIP[sIP][1],self.fIP[sIP][4],"Receiving '"+self.fIP[sIP][0]+"' from "+sIP)
+                    if (self.fIP[sIP][1] == 0):
                         #we have received the entire file. Time to write it.
-                        content_decoded = base64.standard_b64decode(self.filesInProgress[self.client_address[0]][3])
-                        with open(self.filesInProgress[self.client_address[0]][0],'wb') as newfile:
+                        content_decoded = base64.standard_b64decode(self.fIP[sIP][3])
+                        with open(self.fIP[sIP][0],'wb') as newfile:
                             newfile.write(content_decoded)
 
                         hashedWord = md5(content_decoded).hexdigest()
-                        if (self.filesInProgress[self.client_address[0]][2] == hashedWord):
+                        if (self.fIP[sIP][2] == hashedWord):
                             print("\nFile successfully received")
                         else:
                             print("\nFile received but failed hash:")
 
-                        del self.filesInProgress[self.client_address[0]]
+                        del self.fIP[sIP]
                         
                 
                     
@@ -52,7 +54,7 @@ class TCPDNSHandler(socketserver.BaseRequestHandler):
                     # new connection. we expect a file name
                     print("new file upload: ",content)
                     parts = content.split("|")
-                    self.filesInProgress[self.client_address[0]]= [parts[0],int(parts[1]),parts[2],"",int(parts[1])]
+                    self.fIP[sIP]= [os.path.basename(parts[0]),int(parts[1]),parts[2],"",int(parts[1])]
 
 
     def handle(self):
@@ -62,7 +64,7 @@ class TCPDNSHandler(socketserver.BaseRequestHandler):
         
 
         req = dnslib.DNSRecord.parse(self.data[2:])
-        #print(req.questions)
+        print(req)
         
         self.processRequest(req.questions)
 
