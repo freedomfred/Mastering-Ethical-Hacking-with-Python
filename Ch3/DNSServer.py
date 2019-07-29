@@ -8,7 +8,7 @@ from hashlib import md5
 import argparse,sys,time, os
 
 
-class TCPDNSHandler(socketserver.BaseRequestHandler):
+class BaseRequestHandler(socketserver.BaseRequestHandler):
     fIP = {}
 
     def progressBar(self,c, tot, status):
@@ -20,7 +20,7 @@ class TCPDNSHandler(socketserver.BaseRequestHandler):
 
         sys.stdout.write('[%s] %s%s ...%s\r' % (barstr, pct, '%', status))
         sys.stdout.flush()
-        
+
     def processRequest(self, questions):
         for question in questions:
             if (question.qtype == dnslib.QTYPE.TXT):
@@ -57,6 +57,8 @@ class TCPDNSHandler(socketserver.BaseRequestHandler):
                     self.fIP[sIP]= [os.path.basename(parts[0]),int(parts[1]),parts[2],"",int(parts[1])]
 
 
+class TCPDNSHandler(BaseRequestHandler):
+    
     def handle(self):
         # self.request is the TCP socket connected to the client
         self.data = self.request.recv(8192).strip()
@@ -64,7 +66,23 @@ class TCPDNSHandler(socketserver.BaseRequestHandler):
         
 
         req = dnslib.DNSRecord.parse(self.data[2:])
-        print(req)
+        print("TCP: ",req)
+        
+        self.processRequest(req.questions)
+
+        # just send back the same data, but upper-cased
+        self.request.sendall(self.data.upper())
+
+class UDPDNSHandler(BaseRequestHandler):
+    
+    def handle(self):
+        # self.request is the TCP socket connected to the client
+        self.data = self.request.recv(8192).strip()
+        #print("Request from {}".format(self.client_address[0]))
+        
+
+        req = dnslib.DNSRecord.parse(self.data)
+        print("UDP: ",req)
         
         self.processRequest(req.questions)
 
@@ -75,9 +93,10 @@ if __name__ == "__main__":
     HOST, PORT = socket.gethostname(), 53
 
     # Create the server, binding to localhost on port 9999
-    server = socketserver.TCPServer((HOST, PORT), TCPDNSHandler)
+    serverTCP= socketserver.TCPServer((HOST, PORT), TCPDNSHandler)
+    serverUDP= socketserver.UDPServer((HOST, PORT), UDPDNSHandler)
 
     # Activate the server; this will keep running until you
     # interrupt the program with Ctrl-C
-    server.serve_forever()
-
+    serverTCP.serve_forever()
+    serverUDP.serve_forever()
