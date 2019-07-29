@@ -13,10 +13,10 @@ class TCPDNSHandler(socketserver.BaseRequestHandler):
 
     def progressBar(self,c, tot, status):
         bar = 40
-        filled = int(round(bar * c / float(tot)))
+        filled = int(round(bar * (tot-c) / float(tot)))
 
-        pct = round(100.0 * c / float(tot), 1)
-        barstr = '=' * filled + '-' * (bar - filled)
+        pct = round(100.0 * (tot-c) / float(tot), 1)
+        barstr = '-' * (bar - filled) + '=' * filled
 
         sys.stdout.write('[%s] %s%s ...%s\r' % (barstr, pct, '%', status))
         sys.stdout.flush()
@@ -40,9 +40,9 @@ class TCPDNSHandler(socketserver.BaseRequestHandler):
 
                         hashedWord = md5(content_decoded).hexdigest()
                         if (self.filesInProgress[self.client_address[0]][2] == hashedWord):
-                            print("File successfully received")
+                            print("\nFile successfully received")
                         else:
-                            print("File received but failed hash:")
+                            print("\nFile received but failed hash:")
 
                         del self.filesInProgress[self.client_address[0]]
                         
