@@ -79,26 +79,46 @@ class UDPDNSHandler(BaseRequestHandler):
     
     def handle(self):
         # self.request is the TCP socket connected to the client
-        self.data = self.request.recv(8192).strip()
+        data = self.request[0].strip()
         #print("Request from {}".format(self.client_address[0]))
         
 
-        req = dnslib.DNSRecord.parse(self.data)
+        req = dnslib.DNSRecord.parse(data)
         print("UDP: ",req)
         
         self.processRequest(req.questions)
 
         # just send back the same data, but upper-cased
-        self.request.sendall(self.data.upper())
+        self.request[1].sendto(data.upper(), self.client_address)
 
 if __name__ == "__main__":
     HOST, PORT = socket.gethostname(), 53
 
     # Create the server, binding to localhost on port 9999
-    serverTCP= socketserver.TCPServer((HOST, PORT), TCPDNSHandler)
-    serverUDP= socketserver.UDPServer((HOST, PORT), UDPDNSHandler)
+    # serverTCP= socketserver.TCPServer((HOST, PORT), TCPDNSHandler)
+    # serverUDP= socketserver.UDPServer(("127.0.0.1", PORT), UDPDNSHandler)
 
     # Activate the server; this will keep running until you
     # interrupt the program with Ctrl-C
-    serverTCP.serve_forever()
-    serverUDP.serve_forever()
+    servers = []
+    servers.append(socketserver.ThreadingUDPServer((HOST, PORT), UDPDNSHandler))
+    servers.append(socketserver.ThreadingTCPServer((HOST, PORT),TCPDNSHandler))
+    
+    #serverTCP.serve_forever()
+    for s in servers:
+        thread = threading.Thread(target=s.serve_forever)  # that thread will start one more thread for each request
+        thread.daemon = True  # exit the server thread when the main thread terminates
+        thread.start()
+        print("%s server loop running in thread: %s" % (s.RequestHandlerClass.__name__[:3], thread.name))
+
+    try:
+        while 1:
+            time.sleep(1)
+            sys.stderr.flush()
+            sys.stdout.flush()
+
+    except KeyboardInterrupt:
+        pass
+    finally:
+        for s in servers:
+            s.shutdown()
