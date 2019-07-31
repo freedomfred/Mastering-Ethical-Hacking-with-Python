@@ -77,8 +77,8 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
                 #only process TXT record requests
                 content = str(question.qname)[:-1]
                 if content.endswith('.' + self.D):
-                    content = contenr[:-len('.' + self.D)]
-                print(content)
+                    content = content[:-len('.' + self.D)]
+                print("Content:",content)
 
                 sIP = self.client_address[0]
 
@@ -111,7 +111,7 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
                         print("new file upload: ",content)
                         self.fIP[sIP]= [os.path.basename(parts[0]),int(parts[1]),parts[2],"",int(parts[1])]
 
-            print("---- Reply:\n", reply)
+            #print("---- Reply:\n", reply)
 
             return reply.pack()
 
