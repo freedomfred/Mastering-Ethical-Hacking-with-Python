@@ -76,8 +76,8 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
             if (question.qtype == dnslib.QTYPE.TXT):
                 #only process TXT record requests
                 content = str(question.qname)[:-1]
-                if content.endswith('.' + self.D):
-                    content = content[:-len('.' + self.D)]
+                if content.endswith(self.D[:-1]):
+                    content = content[:-len(self.D[:-1])]
                 print("Content:",content)
 
                 sIP = self.client_address[0]
@@ -125,7 +125,7 @@ class TCPDNSHandler(BaseRequestHandler):
         
 
         req = dnslib.DNSRecord.parse(self.data[2:])
-        print("TCP: ",req)
+        #print("TCP: ",req)
         
         reply = self.processRequest(req)
 
@@ -141,7 +141,7 @@ class UDPDNSHandler(BaseRequestHandler):
         
 
         req = dnslib.DNSRecord.parse(data)
-        print("UDP: ",req)
+        #print("UDP: ",req)
         
         reply = self.processRequest(req)
 
