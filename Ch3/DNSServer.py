@@ -77,7 +77,7 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
                 #only process TXT record requests
                 content = str(question.qname)[:-1]
                 if content.endswith('.' + self.D):
-                    content = contenr(:-len('.' + self.D)))
+                    content = contenr[:-len('.' + self.D)]
                 print(content)
 
                 sIP = self.client_address[0]
