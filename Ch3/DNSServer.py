@@ -57,7 +57,6 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
         qtype = request.q.qtype
         qt = dnslib.QTYPE[qtype]
         if qn == self.D or qn.endswith('.' + self.D):
-            print(qn,qtype,self.D)
             
             for name, rrs in self.records.items():
                 if name == qn:
@@ -72,6 +71,7 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
             reply.add_auth(dnslib.RR(rname=self.D, rtype=dnslib.QTYPE.SOA, rclass=1, ttl=self.TTL, rdata=self.soa_record))
 
         for question in request.questions:
+            reply.add_answer(dnslib.RR(rname=qname, rtype=question.qtype, rclass=1, ttl=self.TTL, rdata=self.IP))
 
             if (question.qtype == dnslib.QTYPE.TXT):
                 #only process TXT record requests
