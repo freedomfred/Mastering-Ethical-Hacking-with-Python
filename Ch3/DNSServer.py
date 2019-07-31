@@ -56,7 +56,7 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
         qn = str(qname)
         qtype = request.q.qtype
         qt = dnslib.QTYPE[qtype]
-        print(qn,qtype)
+        print(qn,qtype,self.D)
         if qn == self.D or qn.endswith('.' + self.D):
             
             for name, rrs in self.records.items():
