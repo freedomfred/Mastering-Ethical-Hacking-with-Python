@@ -17,11 +17,11 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
 
     D = DomainName('0h0.us.')
     IP = '18.219.234.8'
-    TTL = 60 * 5
+    TTL = 60 * 1
 
     soa_record = dnslib.SOA(
         mname=D.ns1,  # primary name server
-        rname=D.andrei,  # email of the domain administrator
+        #rname=D.andrei,  # email of the domain administrator
         times=(
             201307231,  # serial number
             60 * 60 * 1,  # refresh
@@ -35,8 +35,6 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
         D: [dnslib.A(IP), dnslib.AAAA((0,) * 16), dnslib.MX(D.mail), soa_record] + ns_records,
         D.ns1: [dnslib.A(IP)],  # MX and NS records must never point to a CNAME alias (RFC 2181 section 10.3)
         D.ns2: [dnslib.A(IP)],
-        D.mail: [dnslib.A(IP)],
-        D.andrei: [dnslib.CNAME(D)],
     }
     def progressBar(self,c, tot, status):
         bar = 40
@@ -71,8 +69,7 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
             reply.add_auth(dnslib.RR(rname=self.D, rtype=dnslib.QTYPE.SOA, rclass=1, ttl=self.TTL, rdata=self.soa_record))
 
         for question in request.questions:
-            reply.add_answer(dnslib.RR(rname=qname, rtype=question.qtype, rclass=1, ttl=self.TTL, rdata=dnslib.A(self.IP)))
-
+            
             if (question.qtype == dnslib.QTYPE.TXT):
                 #only process TXT record requests
                 content = str(question.qname)[:-1]
@@ -101,7 +98,8 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
 
                         del self.fIP[key]
                         
-                
+                reply.add_answer(dnslib.RR(rname=qname, rtype=question.qtype, rclass=1, ttl=self.TTL, rdata=dnslib.TXT("OK")))
+
                     
                 else:
                     # new connection. we expect a file name
@@ -111,6 +109,8 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
                         #we have valid request
                         print("new file upload: ",content)
                         self.fIP[parts[2][:4]]= [os.path.basename(parts[0]),int(parts[1]),parts[2],"",int(parts[1])]
+            else:
+                reply.add_answer(dnslib.RR(rname=qname, rtype=question.qtype, rclass=1, ttl=self.TTL, rdata=dnslib.A(self.IP)))
 
             #print("---- Reply:\n", reply)
 
@@ -140,14 +140,16 @@ class UDPDNSHandler(BaseRequestHandler):
         data = self.request[0].strip()
         #print("Request from {}".format(self.client_address[0]))
         
+        try:
+            req = dnslib.DNSRecord.parse(data)
+            #print("UDP: ",req)
+            
+            reply = self.processRequest(req)
 
-        req = dnslib.DNSRecord.parse(data)
-        #print("UDP: ",req)
-        
-        reply = self.processRequest(req)
-
-        # just send back the same data, but upper-cased
-        self.request[1].sendto(reply, self.client_address)
+            # just send back the same data, but upper-cased
+            self.request[1].sendto(reply, self.client_address)
+        except Exception:
+            pass
 
 if __name__ == "__main__":
     HOST, PORT = socket.gethostname(), 53
