@@ -49,6 +49,8 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
         sys.stdout.flush()
 
     def processRequest(self, questions):
+        reply = DNSRecord(DNSHeader(id=request.header.id, qr=1, aa=1, ra=1), q=questions)
+
         for question in questions:
             if (question.qtype == dnslib.QTYPE.A):
                 reply.add_answer(RR(rname=qname, rtype=getattr(QTYPE, rqt), rclass=1, ttl=TTL, rdata=rdata))
@@ -94,6 +96,9 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
                         self.fIP[sIP]= [os.path.basename(parts[0]),int(parts[1]),parts[2],"",int(parts[1])]
 
 
+            return reply
+
+
 class TCPDNSHandler(BaseRequestHandler):
     
     def handle(self):
@@ -105,10 +110,10 @@ class TCPDNSHandler(BaseRequestHandler):
         req = dnslib.DNSRecord.parse(self.data[2:])
         print("TCP: ",req)
         
-        self.processRequest(req.questions)
+        reply = self.processRequest(req.questions)
 
         # just send back the same data, but upper-cased
-        self.request.sendall(self.data.upper())
+        self.request.sendall(reply)
 
 class UDPDNSHandler(BaseRequestHandler):
     
@@ -121,10 +126,10 @@ class UDPDNSHandler(BaseRequestHandler):
         req = dnslib.DNSRecord.parse(data)
         print("UDP: ",req)
         
-        self.processRequest(req.questions)
+        reply = self.processRequest(req.questions)
 
         # just send back the same data, but upper-cased
-        self.request[1].sendto(data.upper(), self.client_address)
+        self.request[1].sendto(reply, self.client_address)
 
 if __name__ == "__main__":
     HOST, PORT = socket.gethostname(), 53
