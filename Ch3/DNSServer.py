@@ -79,27 +79,27 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
                 if content.endswith(self.D[:-1]):
                     content = content[:-len(self.D[:-1])-1]
                 
-                sIP = self.client_address[0]
-                print("source:",sIP,"Content:",content)
+                key = content[:4]
 
-                if sIP in self.fIP:
-                    self.fIP[sIP][3] += content
-                    self.fIP[sIP][1] -= len(content)
+                if key in self.fIP:
+                    content = content[4:]
+                    self.fIP[key][3] += content
+                    self.fIP[key][1] -= len(content)
                     #print("Left: "+str(self.fIP[sIP][1]))
-                    self.progressBar(self.fIP[sIP][1],self.fIP[sIP][4],"Receiving '"+self.fIP[sIP][0]+"' from "+sIP)
-                    if (self.fIP[sIP][1] == 0):
+                    self.progressBar(self.fIP[key][1],self.fIP[key][4],"Receiving '"+self.fIP[key][0]+"' from "+sIP)
+                    if (self.fIP[key][1] == 0):
                         #we have received the entire file. Time to write it.
-                        content_decoded = base64.standard_b64decode(self.fIP[sIP][3])
-                        with open(self.fIP[sIP][0],'wb') as newfile:
+                        content_decoded = base64.standard_b64decode(self.fIP[key][3])
+                        with open(self.fIP[key][0],'wb') as newfile:
                             newfile.write(content_decoded)
 
                         hashedWord = md5(content_decoded).hexdigest()
-                        if (self.fIP[sIP][2] == hashedWord):
+                        if (self.fIP[key][2] == hashedWord):
                             print("\nFile successfully received")
                         else:
                             print("\nFile received but failed hash:")
 
-                        del self.fIP[sIP]
+                        del self.fIP[key]
                         
                 
                     
@@ -110,7 +110,7 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
                     if (len(parts)==3):
                         #we have valid request
                         print("new file upload: ",content)
-                        self.fIP[sIP]= [os.path.basename(parts[0]),int(parts[1]),parts[2],"",int(parts[1])]
+                        self.fIP[parts[2][:4]]= [os.path.basename(parts[0]),int(parts[1]),parts[2],"",int(parts[1])]
 
             #print("---- Reply:\n", reply)
 
