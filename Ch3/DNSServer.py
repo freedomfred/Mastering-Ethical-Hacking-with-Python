@@ -86,7 +86,7 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
                     self.fIP[key][3] += content
                     self.fIP[key][1] -= len(content)
                     #print("Left: "+str(self.fIP[sIP][1]))
-                    self.progressBar(self.fIP[key][1],self.fIP[key][4],"Receiving '"+self.fIP[key][0]+"' from "+sIP)
+                    self.progressBar(self.fIP[key][1],self.fIP[key][4],"Receiving '"+self.fIP[key][0]+"' with index "+key)
                     if (self.fIP[key][1] == 0):
                         #we have received the entire file. Time to write it.
                         content_decoded = base64.standard_b64decode(self.fIP[key][3])
