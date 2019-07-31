@@ -78,7 +78,7 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
                 content = str(question.qname)[:-1]
                 if content.endswith(self.D[:-1]):
                     content = content[:-len(self.D[:-1])-1]
-                print("Content:",content)
+                #print("Content:",content)
 
                 sIP = self.client_address[0]
 
