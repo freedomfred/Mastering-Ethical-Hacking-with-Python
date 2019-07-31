@@ -48,19 +48,30 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
         sys.stdout.write('[%s] %s%s ...%s\r' % (barstr, pct, '%', status))
         sys.stdout.flush()
 
-    def processRequest(self, questions):
-        reply = DNSRecord(DNSHeader(id=request.header.id, qr=1, aa=1, ra=1), q=questions)
+    def processRequest(self, request):
+        
+        reply = dnslib.DNSRecord(dnslib.DNSHeader(id=request.header.id, qr=1, aa=1, ra=1), q=request.q)
+        
+        qname = request.q.qname
+        qn = str(qname)
+        qtype = request.q.qtype
+        qt = dnslib.QTYPE[qtype]
+        if qn == self.D or qn.endswith('.' + self.D):
+            for name, rrs in self.records.items():
+                if name == qn:
+                    for rdata in rrs:
+                        rqt = rdata.__class__.__name__
+                        if qt in ['*', rqt]:
+                            reply.add_answer(dnslib.RR(rname=qname, rtype=getattr(dnslib.QTYPE, rqt), rclass=1, ttl=self.TTL, rdata=rdata))
 
-        for question in questions:
-            if (question.qtype == dnslib.QTYPE.A):
-                reply.add_answer(RR(rname=qname, rtype=getattr(QTYPE, rqt), rclass=1, ttl=TTL, rdata=rdata))
+            for rdata in self.ns_records:
+                reply.add_ar(dnslib.RR(rname=self.D, rtype=dnslib.QTYPE.NS, rclass=1, ttl=self.TTL, rdata=rdata))
 
-                for rdata in ns_records:
-                    reply.add_ar(RR(rname=D, rtype=QTYPE.NS, rclass=1, ttl=TTL, rdata=rdata))
+            reply.add_auth(dnslib.RR(rname=self.D, rtype=dnslib.QTYPE.SOA, rclass=1, ttl=self.TTL, rdata=self.soa_record))
 
-                reply.add_auth(RR(rname=D, rtype=QTYPE.SOA, rclass=1, ttl=TTL, rdata=soa_record))
+        for question in request.questions:
 
-            elif (question.qtype == dnslib.QTYPE.TXT):
+            if (question.qtype == dnslib.QTYPE.TXT):
                 #only process TXT record requests
                 content = str(question.qname)[:-1]
 
@@ -95,8 +106,9 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
                         print("new file upload: ",content)
                         self.fIP[sIP]= [os.path.basename(parts[0]),int(parts[1]),parts[2],"",int(parts[1])]
 
+            print("---- Reply:\n", reply)
 
-            return reply
+            return reply.pack()
 
 
 class TCPDNSHandler(BaseRequestHandler):
@@ -110,7 +122,7 @@ class TCPDNSHandler(BaseRequestHandler):
         req = dnslib.DNSRecord.parse(self.data[2:])
         print("TCP: ",req)
         
-        reply = self.processRequest(req.questions)
+        reply = self.processRequest(req)
 
         # just send back the same data, but upper-cased
         self.request.sendall(reply)
@@ -126,7 +138,7 @@ class UDPDNSHandler(BaseRequestHandler):
         req = dnslib.DNSRecord.parse(data)
         print("UDP: ",req)
         
-        reply = self.processRequest(req.questions)
+        reply = self.processRequest(req)
 
         # just send back the same data, but upper-cased
         self.request[1].sendto(reply, self.client_address)
