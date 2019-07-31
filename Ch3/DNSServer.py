@@ -105,6 +105,7 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
                     
                 else:
                     # new connection. we expect a file name
+                    print("New file:",content)
                     parts = content.split("|")
                     if (len(parts)==3):
                         #we have valid request
