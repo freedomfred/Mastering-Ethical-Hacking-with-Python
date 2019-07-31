@@ -7,10 +7,37 @@ import base64
 from hashlib import md5
 import argparse,sys,time, os
 
+class DomainName(str):
+    def __getattr__(self, item):
+        return DomainName(item + '.' + self)
+
 
 class BaseRequestHandler(socketserver.BaseRequestHandler):
     fIP = {}
 
+    D = DomainName('0h0.us.')
+    IP = '18.219.234.8'
+    TTL = 60 * 5
+
+    soa_record = dnslib.SOA(
+        mname=D.ns1,  # primary name server
+        rname=D.andrei,  # email of the domain administrator
+        times=(
+            201307231,  # serial number
+            60 * 60 * 1,  # refresh
+            60 * 60 * 3,  # retry
+            60 * 60 * 24,  # expire
+            60 * 60 * 1,  # minimum
+        )
+    )
+    ns_records = [dnslib.NS(D.ns1), dnslib.NS(D.ns2)]
+    records = {
+        D: [dnslib.A(IP), dnslib.AAAA((0,) * 16), dnslib.MX(D.mail), soa_record] + ns_records,
+        D.ns1: [dnslib.A(IP)],  # MX and NS records must never point to a CNAME alias (RFC 2181 section 10.3)
+        D.ns2: [dnslib.A(IP)],
+        D.mail: [dnslib.A(IP)],
+        D.andrei: [dnslib.CNAME(D)],
+    }
     def progressBar(self,c, tot, status):
         bar = 40
         filled = int(round(bar * (tot-c) / float(tot)))
@@ -23,7 +50,15 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
 
     def processRequest(self, questions):
         for question in questions:
-            if (question.qtype == dnslib.QTYPE.TXT):
+            if (question.qtype == dnslib.QTYPE.A):
+                reply.add_answer(RR(rname=qname, rtype=getattr(QTYPE, rqt), rclass=1, ttl=TTL, rdata=rdata))
+
+                for rdata in ns_records:
+                    reply.add_ar(RR(rname=D, rtype=QTYPE.NS, rclass=1, ttl=TTL, rdata=rdata))
+
+                reply.add_auth(RR(rname=D, rtype=QTYPE.SOA, rclass=1, ttl=TTL, rdata=soa_record))
+
+            elif (question.qtype == dnslib.QTYPE.TXT):
                 #only process TXT record requests
                 content = str(question.qname)[:-1]
 
