@@ -80,7 +80,7 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
                     content = content[:-len(self.D[:-1])-1]
                 
                 sIP = self.client_address[0]
-                print("source:",sIP,Content:",content)
+                print("source:",sIP,"Content:",content)
 
                 if sIP in self.fIP:
                     self.fIP[sIP][3] += content
