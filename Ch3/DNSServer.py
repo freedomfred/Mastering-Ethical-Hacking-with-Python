@@ -21,9 +21,8 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
 
     soa_record = dnslib.SOA(
         mname=D.ns1,  # primary name server
-        #rname=D.andrei,  # email of the domain administrator
         times=(
-            201307231,  # serial number
+            22118400,  # serial number
             60 * 60 * 1,  # refresh
             60 * 60 * 3,  # retry
             60 * 60 * 24,  # expire
@@ -32,9 +31,9 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
     )
     ns_records = [dnslib.NS(D.ns1), dnslib.NS(D.ns2)]
     records = {
-        D: [dnslib.A(IP), dnslib.AAAA((0,) * 16), dnslib.MX(D.mail), soa_record] + ns_records,
+        D: [dnslib.A(IP), dnslib.AAAA((0,) * 16), soa_record] + ns_records,
         D.ns1: [dnslib.A(IP)],  # MX and NS records must never point to a CNAME alias (RFC 2181 section 10.3)
-        D.ns2: [dnslib.A(IP)],
+        D.ns2: [dnslib.A(IP)]
     }
     def progressBar(self,c, tot, status):
         bar = 40
