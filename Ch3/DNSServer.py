@@ -97,10 +97,7 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
                             print("\nFile received but failed hash:")
 
                         del self.fIP[key]
-                        
-                reply.add_answer(dnslib.RR(rname=qname, rtype=question.qtype, rclass=1, ttl=self.TTL, rdata=dnslib.TXT("OK")))
-
-                    
+                            
                 else:
                     # new connection. we expect a file name
                     print("New file:",content)
@@ -109,6 +106,9 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
                         #we have valid request
                         print("new file upload: ",content)
                         self.fIP[parts[2][:4]]= [os.path.basename(parts[0]),int(parts[1]),parts[2],"",int(parts[1])]
+
+                reply.add_answer(dnslib.RR(rname=qname, rtype=question.qtype, rclass=1, ttl=self.TTL, rdata=dnslib.TXT("OK")))
+
             else:
                 reply.add_answer(dnslib.RR(rname=qname, rtype=question.qtype, rclass=1, ttl=self.TTL, rdata=dnslib.A(self.IP)))
 
