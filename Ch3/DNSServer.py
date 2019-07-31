@@ -35,7 +35,7 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
         D: [dnslib.A(IP), dnslib.AAAA((0,) * 16), dnslib.MX(D.mail), soa_record] + ns_records,
         D.ns1: [dnslib.A(IP)],  # MX and NS records must never point to a CNAME alias (RFC 2181 section 10.3)
         D.ns2: [dnslib.A(IP)],
-        D.caa: [dnslib.A(IP)]
+        D.caa: [dnslib.A(IP)],
         D.mail: [dnslib.A(IP)],
         D.andrei: [dnslib.CNAME(D)],
     }
