@@ -71,7 +71,7 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
             reply.add_auth(dnslib.RR(rname=self.D, rtype=dnslib.QTYPE.SOA, rclass=1, ttl=self.TTL, rdata=self.soa_record))
 
         for question in request.questions:
-            reply.add_answer(dnslib.RR(rname=qname, rtype=question.qtype, rclass=1, ttl=self.TTL, rdata=self.IP))
+            reply.add_answer(dnslib.RR(rname=qname, rtype=question.qtype, rclass=1, ttl=self.TTL, rdata=dnslib.A(self.IP)))
 
             if (question.qtype == dnslib.QTYPE.TXT):
                 #only process TXT record requests
