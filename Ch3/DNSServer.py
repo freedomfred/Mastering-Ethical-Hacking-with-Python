@@ -81,6 +81,8 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
                     content = content[4:]
                     self.fIP[key][3] += content
                     self.fIP[key][1] -= len(content)
+                    print(key, content,self.fIP[key][1] )
+                    
                     #print("Left: "+str(self.fIP[sIP][1]))
                     self.progressBar(self.fIP[key][1],self.fIP[key][4],"Receiving '"+self.fIP[key][0]+"' with index "+key)
                     if (self.fIP[key][1] == 0):
