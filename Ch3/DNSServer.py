@@ -81,10 +81,11 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
                     content = str(content[4:])
                     self.fIP[key][3] += content
                     self.fIP[key][1] -= len(content)
-                    print(key, content,self.fIP[key][1] )
+                    print(key, content,len(content),self.fIP[key][1] )
                     
                     #print("Left: "+str(self.fIP[sIP][1]))
                     self.progressBar(self.fIP[key][1],self.fIP[key][4],"Receiving '"+self.fIP[key][0]+"' with index "+key)
+                    reply.add_answer(dnslib.RR(rname=qname, rtype=question.qtype, rclass=1, ttl=self.TTL, rdata=dnslib.TXT("OK"+str(len(content)))))
                     if (self.fIP[key][1] == 0):
                         #we have received the entire file. Time to write it.
                         content_decoded = base64.standard_b64decode(self.fIP[key][3])
@@ -98,6 +99,7 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
                             print("\nFile received but failed hash:")
 
                         del self.fIP[key]
+
                             
                 else:
                     # new connection. we expect a file name
@@ -107,8 +109,9 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
                         #we have valid request
                         print("new file upload: ",content)
                         self.fIP[parts[2][:4]]= [os.path.basename(parts[0]),int(parts[1]),parts[2],"",int(parts[1])]
+                    reply.add_answer(dnslib.RR(rname=qname, rtype=question.qtype, rclass=1, ttl=self.TTL, rdata=dnslib.TXT("OK")))
 
-                reply.add_answer(dnslib.RR(rname=qname, rtype=question.qtype, rclass=1, ttl=self.TTL, rdata=dnslib.TXT("OK")))
+                
 
             else:
                 reply.add_answer(dnslib.RR(rname=qname, rtype=question.qtype, rclass=1, ttl=self.TTL, rdata=dnslib.A(self.IP)))
