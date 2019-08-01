@@ -78,7 +78,7 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
                 key = content[:4]
 
                 if key in self.fIP:
-                    content = content[4:]
+                    content = str(content[4:])
                     self.fIP[key][3] += content
                     self.fIP[key][1] -= len(content)
                     print(key, content,self.fIP[key][1] )
