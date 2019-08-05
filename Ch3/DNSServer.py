@@ -159,19 +159,19 @@ class UDPDNSHandler(BaseRequestHandler):
         data = self.request[0].strip()
         #print("UDP Request from {}".format(self.client_address[0]))
         
-        #try:
-        req = dnslib.DNSRecord.parse(data)
-        #print("UDP: ",req)
-        
-        reply = self.processRequest(req)
+        try:
+            req = dnslib.DNSRecord.parse(data)
+            #print("UDP: ",req)
+            
+            reply = self.processRequest(req)
 
-        # just send back the same data, but upper-cased
-        #print("responding:",reply)
-        self.request[1].sendto(reply, self.client_address)
-        #print("responded")
-        #except Exception as e:
-        #    print(e)
-        #    pass
+            # just send back the same data, but upper-cased
+            #print("responding:",reply)
+            self.request[1].sendto(reply, self.client_address)
+            #print("responded")
+        except Exception as e:
+            print(e)
+            pass
 
 if __name__ == "__main__":
     HOST, PORT = socket.gethostname(), 53
