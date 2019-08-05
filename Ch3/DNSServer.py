@@ -4,6 +4,7 @@ import socket
 import socketserver
 import dnslib
 import base64
+import binascii
 from hashlib import md5
 import argparse,sys,time, os
 
@@ -81,11 +82,12 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
                     content = str(content[4:])
                     self.fIP[key][3] += content
                     self.fIP[key][1] -= len(content)
-                    print(key, content,len(content),self.fIP[key][1] )
+                    #print(key, content,len(content),self.fIP[key][1] )
                     
                     #print("Left: "+str(self.fIP[sIP][1]))
                     self.progressBar(self.fIP[key][1],self.fIP[key][4],"Receiving '"+self.fIP[key][0]+"' with index "+key)
-                    reply.add_answer(dnslib.RR(rname=qname, rtype=question.qtype, rclass=1, ttl=self.TTL, rdata=dnslib.TXT("OK"+str(len(content)))))
+                    reply.add_answer(dnslib.RR(rname=qname, rtype=question.qtype, rclass=1, ttl=self.TTL, rdata=dnslib.TXT(content)))
+                        #reply.add_answer(dnslib.RR(rname=qname, rtype=question.qtype, rclass=1, ttl=self.TTL, rdata=dnslib.TXT("OK")))
                     if (self.fIP[key][1] == 0):
                         #we have received the entire file. Time to write it.
                         content_decoded = base64.standard_b64decode(self.fIP[key][3])
@@ -95,10 +97,15 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
                         hashedWord = md5(content_decoded).hexdigest()
                         if (self.fIP[key][2] == hashedWord):
                             print("\nFile successfully received")
+                            reply.add_answer(dnslib.RR(rname=qname, rtype=question.qtype, rclass=1, ttl=self.TTL, rdata=dnslib.TXT("OK")))
+                    
                         else:
                             print("\nFile received but failed hash:")
+                            reply.add_answer(dnslib.RR(rname=qname, rtype=question.qtype, rclass=1, ttl=self.TTL, rdata=dnslib.TXT("FAIL HASH")))
+                    
 
                         del self.fIP[key]
+                    
 
                             
                 else:
@@ -114,10 +121,9 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
                 
 
             else:
-                reply.add_answer(dnslib.RR(rname=qname, rtype=question.qtype, rclass=1, ttl=self.TTL, rdata=dnslib.A(self.IP)))
+                 reply.add_answer(dnslib.RR(rname=qname, rtype=question.qtype, rclass=1, ttl=self.TTL, rdata=dnslib.A(self.IP)))
 
-            #print("---- Reply:\n", reply)
-
+            #print("responding:",reply)
             return reply.pack()
 
 
@@ -126,6 +132,12 @@ class TCPDNSHandler(BaseRequestHandler):
     def handle(self):
         # self.request is the TCP socket connected to the client
         self.data = self.request.recv(8192).strip()
+        sz = int(binascii.b2a_hex(self.data[:2]), 16)
+        
+        if sz < len(self.data) - 2:
+            raise Exception("Wrong size of TCP packet")
+        elif sz > len(self.data) - 2:
+            raise Exception("Too big TCP packet")
         #print("Request from {}".format(self.client_address[0]))
         
 
@@ -133,27 +145,33 @@ class TCPDNSHandler(BaseRequestHandler):
         #print("TCP: ",req)
         
         reply = self.processRequest(req)
+        #print(reply)
+        
 
-        # just send back the same data, but upper-cased
-        self.request.sendall(reply)
+        sz = hex(len(reply))[2:].zfill(4)
+        sb = bytearray.fromhex(sz)
+        self.request.sendall(sb+reply)
 
 class UDPDNSHandler(BaseRequestHandler):
     
     def handle(self):
         # self.request is the TCP socket connected to the client
         data = self.request[0].strip()
-        #print("Request from {}".format(self.client_address[0]))
+        #print("UDP Request from {}".format(self.client_address[0]))
         
-        try:
-            req = dnslib.DNSRecord.parse(data)
-            #print("UDP: ",req)
-            
-            reply = self.processRequest(req)
+        #try:
+        req = dnslib.DNSRecord.parse(data)
+        #print("UDP: ",req)
+        
+        reply = self.processRequest(req)
 
-            # just send back the same data, but upper-cased
-            self.request[1].sendto(reply, self.client_address)
-        except Exception:
-            pass
+        # just send back the same data, but upper-cased
+        #print("responding:",reply)
+        self.request[1].sendto(reply, self.client_address)
+        #print("responded")
+        #except Exception as e:
+        #    print(e)
+        #    pass
 
 if __name__ == "__main__":
     HOST, PORT = socket.gethostname(), 53
