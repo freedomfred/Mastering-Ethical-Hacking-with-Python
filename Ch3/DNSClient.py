@@ -8,7 +8,7 @@ from hashlib import md5
 
 
 
-def tcp_dns_record(ns,host, qtype, server,tcp):
+def tcp_dns_record(ns,host, qtype,tcp):
 
     if isinstance(qtype, str):
         query = dnslib.DNSRecord.question(host, qtype=qtype)
@@ -78,7 +78,7 @@ if __name__ == "__main__":
         #print(chunk, count)
         progressBar(count, len(content_encoded), status="Sending file "+args.file+ " to "+address+":"+port)
         
-        r = tcp_dns_record(args.nameserver,hashedWord[:4]+chunk+"."+args.domain, dnslib.QTYPE.TXT,address,args.tcp)
+        r = tcp_dns_record(args.nameserver,hashedWord[:4]+chunk+"."+args.domain, dnslib.QTYPE.TXT,args.tcp)
         
         resp = dnslib.DNSRecord.parse(r)
         if len(resp.rr)==2:
