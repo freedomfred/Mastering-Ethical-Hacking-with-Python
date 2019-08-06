@@ -26,8 +26,8 @@ class BaseRequestHandler(socketserver.BaseRequestHandler):
             22118400,  # serial number
             60 * 60 * 1,  # refresh
             60 * 60 * 3,  # retry
-            60 * 60 * 24,  # expire
-            60 * 60 * 1,  # minimum
+            1 * 1 * 1,  # expire
+            1 * 1 * 1,  # minimum
         )
     )
     ns_records = [dnslib.NS(D.ns1), dnslib.NS(D.ns2)]
